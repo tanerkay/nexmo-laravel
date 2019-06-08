@@ -3,8 +3,10 @@
 namespace Nexmo\Laravel;
 
 use Nexmo\Client;
+use Nexmo\Client\Signature;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Config\Repository as Config;
+use Illuminate\Support\Facades\Validator;
 
 class NexmoServiceProvider extends ServiceProvider
 {
@@ -36,6 +38,23 @@ class NexmoServiceProvider extends ServiceProvider
 
         // Merge config.
         $this->mergeConfigFrom($dist, 'nexmo');
+
+        // Add a new validation rule for validating signatures
+        // Implicit means that it runs even if the sig field is not sent
+        Validator::extendImplicit('nexmo_signature', function ($attribute, $value, $parameters, $validator) {
+            $data = $validator->getData();
+
+            if (!isset($data['sig'])) {
+                return false;
+            }
+
+            $signature = new Signature(
+                $data,
+                config('nexmo.signature_secret'),
+                config('nexmo.signature_method')
+            );
+            return $signature->check($data['sig']);
+        });
     }
 
     /**

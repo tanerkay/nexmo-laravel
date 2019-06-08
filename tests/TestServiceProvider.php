@@ -31,4 +31,5 @@ class TestServiceProvider extends AbstractTestCase
 
         $this->assertInstanceOf(Client::class, $client);
     }
+
 }
